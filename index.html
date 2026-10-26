@@ -1,0 +1,41 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>smart scroll</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <h1>smart scroll</h1>
+
+    <div id="card-type-toggle">
+      <button id="type-all" class="type-btn active">all</button>
+      <button id="type-sat" class="type-btn">sat</button>
+      <button id="type-chem" class="type-btn">chem</button>
+    </div>
+
+    <div id="card">
+      <div id="tag"></div>
+      <div id="question"></div>
+      <div id="answer" class="hidden"></div>
+    </div>
+
+    <div id="controls">
+      <button id="show-answer-btn">show answer</button>
+      <button id="hard-btn">🤔 hard</button>
+      <button id="easy-btn">✅ easy</button>
+    </div>
+
+    <div id="stats">
+      <span id="streak-label">streak: <span id="streak-value">0</span></span>
+      <span id="today-label">today: <span id="today-count">0</span></span>
+    </div>
+  </div>
+
+  <script src="cards.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

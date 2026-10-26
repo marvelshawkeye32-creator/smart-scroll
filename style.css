@@ -1,0 +1,127 @@
+/* style.css */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: #050816;
+  color: #f5f5f5;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#app {
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+#card-type-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 999px;
+  border: 1px solid #444;
+  background: #111827;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+}
+
+.type-btn.active {
+  background: #22c55e;
+  color: #020617;
+  border-color: #22c55e;
+}
+
+#card {
+  background: radial-gradient(circle at top left, #1d4ed8, #020617);
+  border-radius: 16px;
+  padding: 16px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+#tag {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+#question {
+  margin-top: 8px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+#answer {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  border-top: 1px solid rgba(248,250,252,0.2);
+  padding-top: 8px;
+  opacity: 0.95;
+}
+
+.hidden {
+  display: none;
+}
+
+#controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#controls button {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.9rem;
+}
+
+#show-answer-btn {
+  background: #0ea5e9;
+  color: #020617;
+}
+
+#hard-btn {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+#easy-btn {
+  background: #22c55e;
+  color: #020617;
+}
+
+#stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  padding: 0 2px;
+}
