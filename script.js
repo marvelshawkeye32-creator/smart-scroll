@@ -36,6 +36,13 @@ const confettiLayer = document.getElementById("confetti-layer");
 
 // state
 let currentFilter = "all"; // "all" | "sat" | "chem"
+let currentDeck = "core"; // "core" | "sat"
+
+const deckButtons = {
+  core: document.getElementById("deck-core"),
+  sat: document.getElementById("deck-sat"),
+};
+
 let currentCard = null;
 let currentOptions = [];
 let correctOptionIndex = -1;
@@ -168,7 +175,7 @@ function getFilteredCards() {
   return CARDS.filter(c => c.type === currentFilter);
 }
 
-function pickRandomCard() {
+function pickRandomCoreCard() {
   const pool = getFilteredCards();
   if (!pool.length) return null;
   const idx = Math.floor(Math.random() * pool.length);
@@ -209,7 +216,65 @@ function letterForIndex(idx) {
   return ["a", "b", "c", "d"][idx] || "?";
 }
 
-function renderCard() {
+function setDeck(deckName) {
+  currentDeck = deckName;
+
+  Object.entries(deckButtons).forEach(([k, btn]) => {
+    if (k === deckName) btn.classList.add("active");
+    else btn.classList.remove("active");
+  });
+
+  loadNewCard();
+}
+function pickRandomSatCard() {
+  if (!SAT_CARDS || SAT_CARDS.length === 0) return null;
+  const idx = Math.floor(Math.random() * SAT_CARDS.length);
+  return SAT_CARDS[idx];
+}
+
+function renderSatCard() {
+  cardEl.classList.remove("correct", "wrong");
+  optionsContainer.innerHTML = "";
+  answeringLocked = false;
+
+  if (!currentCard) {
+    questionEl.textContent = "no sat cards yet.";
+    tagEl.textContent = "";
+    return;
+  }
+
+  questionEl.textContent = currentCard.question;
+  tagEl.textContent = currentCard.skill || "sat";
+
+  currentOptions = currentCard.choices.map((text, i) => ({
+    text,
+    correct: "ABCD"[i] === currentCard.correct
+  }));
+  correctOptionIndex = currentOptions.findIndex(o => o.correct);
+
+  currentOptions.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.dataset.index = i.toString();
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "option-label";
+    labelSpan.textContent = letterForIndex(i);
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "option-text";
+    textSpan.textContent = opt.text;
+
+    btn.appendChild(labelSpan);
+    btn.appendChild(textSpan);
+
+    btn.addEventListener("click", () => handleOptionClick(i, btn));
+
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function renderCoreCard() {
   cardEl.classList.remove("correct", "wrong");
   optionsContainer.innerHTML = "";
   answeringLocked = false;
@@ -344,9 +409,15 @@ function handleOptionClick(index, btn) {
 }
 
 function loadNewCard() {
-  currentCard = pickRandomCard();
-  renderCard();
+  if (currentDeck === "sat") {
+    currentCard = pickRandomSatCard();
+    renderSatCard();
+  } else {
+    currentCard = pickRandomCoreCard();
+    renderCoreCard();
+  }
 }
+
 
 // ---- mode switching ----
 
@@ -572,6 +643,9 @@ function init() {
   dailyGoalEl.textContent = DAILY_GOAL.toString();
   refreshStatsUI();
 
+  deckButtons.core.addEventListener("click", () => setDeck("core"));
+  deckButtons.sat.addEventListener("click", () => setDeck("sat"));
+
   modeButtons.all.addEventListener("click", () => setFilter("all"));
   modeButtons.sat.addEventListener("click", () => setFilter("sat"));
   modeButtons.chem.addEventListener("click", () => setFilter("chem"));
@@ -580,19 +654,9 @@ function init() {
     loadNewCard();
   });
 
-  // gyross: repurpose lock btn as "fire"
-  gyroLockBtn.textContent = "fire";
-  gyroLockBtn.addEventListener("click", () => {
-    gyrussFireBullet();
-  });
+  gyroLockBtn.addEventListener("click", handleGyroLock);
 
-  // handle taps on arena for rotation
-  gyroArena.addEventListener("click", handleArenaTap);
-  gyroArena.addEventListener("touchstart", handleArenaTap);
-
-  resetGyruss();
-  requestAnimationFrame(gyrussLoop);
-
+  requestAnimationFrame(updateGyro);
   loadNewCard();
 }
 
