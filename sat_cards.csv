@@ -1,0 +1,5 @@
+id,skill,question,choiceA,choiceB,choiceC,choiceD,correct,explanation
+1,vocab,"which choice completes the text with the most logical and precise word or phrase?","attached","collected","followed","replaced","B","osiris-rex gathered pieces to bring back → it COLLECTED a sample."
+2,vocab,"which choice completes the text with the most logical and precise word or phrase?","reflect","receive","evaluate","mimic","A","the surface may not accurately REFLECT early impact events."
+3,vocab,"which choice completes the text with the most logical and precise word or phrase?","recognizable","intriguing","significant","useful","A","handedness is less RECOGNIZABLE in animals."
+4,structure,"which choice best describes the overall structure of the text?","...","...","...","...","B","description of sight → wondering about meaning."
