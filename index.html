@@ -10,66 +10,105 @@
 <body>
   <div id="app">
     <header class="app-header">
-      <div class="brand">
+      <div class="brand" id="brand-home">
         <span class="logo-dot"></span>
-        <span class="brand-text">smart scroll</span>
+        <span class="brand-text">Smart Scroll</span>
       </div>
-      <div class="mode-pill">
-        <button id="type-all" class="mode-btn active">all</button>
-        <button id="type-sat" class="mode-btn">sat</button>
-        <button id="type-chem" class="mode-btn">chem</button>
-      </div>
-      <div class="deck-pill">
-        <button id="deck-core" class="mode-btn active">core</button>
-        <button id="deck-sat" class="mode-btn">sat</button>
-      </div>  
     </header>
-
     <main>
-      <section id="stats-bar">
-        <div class="stat-block">
-          <div class="stat-label">today (pst)</div>
-          <div class="stat-value"><span id="today-correct">0</span> / <span id="daily-goal">300</span></div>
-          <div class="progress-shell">
-            <div id="progress-fill"></div>
-          </div>
+    <!-- home view -->
+    <section id="view-home">
+        <div class="home-card">
+            <h2>what do you want to train?</h2>
+            <button id="go-core" class="primary-btn">core deck (chem + misc)</button>
+            <button id="go-sat" class="primary-btn">sat verbal</button>
         </div>
-        <div class="stat-block">
-          <div class="stat-label">streak (days hit goal)</div>
-          <div class="stat-value" id="streak-days">0</div>
-        </div>
-      </section>
+    </section>
 
-      <section id="card-shell">
-        <div id="card" class="card">
-          <div class="card-tag" id="card-tag"></div>
-          <div class="card-question" id="card-question"></div>
-          <div class="card-options" id="options-container">
-            <!-- options injected by js -->
-          </div>
-        </div>
-        <button id="next-btn" class="ghost-btn">next question ↻</button>
-      </section>
+    <!-- core view: we will paste your existing stuff inside here -->
+    <section id="view-core" class="hidden">
+        <section id="stats-bar">
+            <div class="stat-block">
+                <div class="stat-label">today (pst)</div>
+                <div class="stat-value">
+                    <span id="today-correct">0</span> / <span id="daily-goal">300</span>
+                </div>
+                <div class="progress-shell">
+                    <div id="progress-fill"></div>
+                </div>
+            </div>
+            <div class="stat-block">
+                <div class="stat-label">streak (days hit goal)</div>
+                <div class="stat-value" id="streak-days">0</div>
+            </div>
+        </section>
 
-      <section id="gyros-section" class="hidden">
-        <div class="section-header">
-          <span class="section-title">gyros unlocked</span>
-          <span class="section-subtitle">daily goal hit. spin the core.</span>
+            <!-- if you still want all/sat/chem filter for core, keep this -->
+        <div id="card-type-toggle">
+            <button id="type-all" class="type-btn active">all</button>
+            <button id="type-sat" class="type-btn">sat</button>
+            <button id="type-chem" class="type-btn">chem</button>
         </div>
-        <div id="gyros-card">
-            <div id="gyros-arena">
-                <div id="gyro-circle"></div>
-                <div id="gyro-ship"></div>
+
+        <section id="card-shell">
+            <div id="card" class="card">
+                <div class="card-tag" id="card-tag"></div>
+                <div class="card-question" id="card-question"></div>
+                <div class="card-options" id="options-container">
+                    <!-- core options injected by js -->
+                </div>
+            </div>
+            <button id="next-btn" class="ghost-btn">next question ↻</button>
+        </section>
+
+        <section id="gyros-section" class="hidden">
+            <div class="section-header">
+                <span class="section-title">gyros unlocked</span>
+                <span class="section-subtitle">daily goal hit. spin the core.</span>
+            </div>
+            <div id="gyros-card">
+                <div id="gyros-arena">
+                    <div id="gyro-circle"></div>
+                    <div id="gyro-ship"></div>
+                </div>
+                <div class="gyros-ui">
+                    <button id="gyro-lock-btn">fire</button>
+                    <div class="gyros-stats">
+                    score: <span id="gyro-score">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </section>
+
+
+    <!-- sat verbal view -->
+    <section id="view-sat" class="hidden">
+        <section id="sat-stats-bar">
+            <div class="stat-block">
+                <div class="stat-label">sat today (pst)</div>
+                <div class="stat-value"><span id="sat-today-correct">0</span> / 100</div>
+                <div class="progress-shell">
+                    <div id="sat-progress-fill"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sat-card-shell">
+            <div id="sat-context" class="sat-context">
+            <!-- full passage / table goes here via js -->
             </div>
 
-          <div class="gyros-ui">
-            <button id="gyro-lock-btn">lock</button>
-            <div class="gyros-stats">
-              score: <span id="gyro-score">0</span>
+            <div id="sat-question-card" class="card">
+                <div class="card-tag" id="sat-card-tag"></div>
+                <div class="card-question" id="sat-question"></div>
+                <div class="card-options" id="sat-options-container"></div>
             </div>
-          </div>
-        </div>
-      </section>
+
+            <button id="sat-next-btn" class="ghost-btn">next sat question ↻</button>
+        </section>
+    </section>
+
     </main>
   </div>
 
@@ -77,6 +116,7 @@
 
   <script src="cards.js"></script>
   <script src="sat_cards.js"></script>
+  <script src="sat_verbal_cards.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

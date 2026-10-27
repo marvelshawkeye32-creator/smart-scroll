@@ -3,6 +3,9 @@
 // ---- config ----
 const DAILY_GOAL = 100;
 const PST_TIMEZONE = "America/Los_Angeles";
+const LS_KEY_SAT_DAILY = "smartScroll_satVerbalDaily_v1";
+const SAT_DAILY_GOAL = 100;
+
 
 // storage keys
 const LS_KEY_DAILY = "smartScroll_daily_v2";
@@ -34,14 +37,38 @@ const gyroScoreEl = document.getElementById("gyro-score");
 
 const confettiLayer = document.getElementById("confetti-layer");
 
-// state
-let currentFilter = "all"; // "all" | "sat" | "chem"
-let currentDeck = "core"; // "core" | "sat"
-
-const deckButtons = {
-  core: document.getElementById("deck-core"),
-  sat: document.getElementById("deck-sat"),
+// view routing
+const viewEls = {
+  home: document.getElementById("view-home"),
+  core: document.getElementById("view-core"),
+  sat: document.getElementById("view-sat"),
 };
+
+const brandHomeEl = document.getElementById("brand-home");
+const goCoreBtn = document.getElementById("go-core");
+const goSatBtn = document.getElementById("go-sat");
+
+let currentView = "home"; // "home" | "core" | "sat"
+
+// sat verbal dom
+const satContextEl = document.getElementById("sat-context");
+const satQuestionEl = document.getElementById("sat-question");
+const satTagEl = document.getElementById("sat-card-tag");
+const satOptionsContainer = document.getElementById("sat-options-container");
+const satNextBtn = document.getElementById("sat-next-btn");
+const satTodayCorrectEl = document.getElementById("sat-today-correct");
+const satProgressFillEl = document.getElementById("sat-progress-fill");
+
+
+// state
+
+let currentSatCard = null;
+let currentSatOptions = [];
+let currentSatCorrectIndex = -1;
+let satAnsweringLocked = false;
+
+
+let currentFilter = "all"; // "all" | "sat" | "chem"
 
 let currentCard = null;
 let currentOptions = [];
@@ -61,6 +88,55 @@ let gyrussBaseEnemySpeed = 20; // px/s outward
 let gyrussRunning = false;
 
 // ---- helpers: time + storage ----
+
+function loadSatDaily() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_SAT_DAILY);
+    const today = getPstDateString();
+    if (!raw) return { date: today, correct: 0 };
+    const obj = JSON.parse(raw);
+    if (obj.date !== today) return { date: today, correct: 0 };
+    return obj;
+  } catch (e) {
+    return { date: getPstDateString(), correct: 0 };
+  }
+}
+
+function saveSatDaily(obj) {
+  localStorage.setItem(LS_KEY_SAT_DAILY, JSON.stringify(obj));
+}
+
+function refreshSatStatsUI() {
+  const satDaily = loadSatDaily();
+  satTodayCorrectEl.textContent = satDaily.correct.toString();
+  const pct = Math.min(1, satDaily.correct / SAT_DAILY_GOAL);
+  satProgressFillEl.style.width = `${pct * 100}%`;
+
+  if (satDaily.correct >= SAT_DAILY_GOAL) {
+    const updatedStreak = maybeUpdateStreakAfterGoalHit(satDaily.date);
+    streakDaysEl.textContent = updatedStreak.streakDays.toString();
+    gyrosSection.classList.remove("hidden");
+    gyrussRunning = true;
+  }
+}
+
+function setView(viewName) {
+  currentView = viewName;
+  Object.entries(viewEls).forEach(([k, el]) => {
+    if (!el) return;
+    if (k === viewName) el.classList.remove("hidden");
+    else el.classList.add("hidden");
+  });
+
+  if (viewName === "core") {
+    // ensure core deck is active if you still use deckButtons
+    currentDeck = "core";
+    loadNewCard();
+  } else if (viewName === "sat") {
+    refreshSatStatsUI();
+    loadSatQuestion();
+  }
+}
 
 function getPstDateString() {
   const now = new Date();
@@ -170,6 +246,60 @@ function refreshStatsUI() {
 
 // ---- cards + mcqs ----
 
+function pickRandomSatVerbalCard() {
+  if (!SAT_VERBAL_CARDS || SAT_VERBAL_CARDS.length === 0) return null;
+  const idx = Math.floor(Math.random() * SAT_VERBAL_CARDS.length);
+  return SAT_VERBAL_CARDS[idx];
+}
+
+function loadSatQuestion() {
+  currentSatCard = pickRandomSatVerbalCard();
+  renderSatQuestion();
+}
+
+function renderSatQuestion() {
+  satAnsweringLocked = false;
+  satOptionsContainer.innerHTML = "";
+
+  if (!currentSatCard) {
+    satContextEl.innerHTML = "<p>no sat verbal cards yet.</p>";
+    satQuestionEl.textContent = "";
+    satTagEl.textContent = "";
+    return;
+  }
+
+  satContextEl.innerHTML = currentSatCard.contextHtml || "";
+  satQuestionEl.textContent = currentSatCard.question;
+  satTagEl.textContent = currentSatCard.skill || "sat verbal";
+
+  currentSatOptions = currentSatCard.choices.map((text, i) => ({
+    text,
+    correct: "ABCD"[i] === currentSatCard.correct
+  }));
+  currentSatCorrectIndex = currentSatOptions.findIndex(o => o.correct);
+
+  currentSatOptions.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.dataset.index = i.toString();
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "option-label";
+    labelSpan.textContent = ["a","b","c","d"][i];
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "option-text";
+    textSpan.textContent = opt.text;
+
+    btn.appendChild(labelSpan);
+    btn.appendChild(textSpan);
+
+    btn.addEventListener("click", () => handleSatOptionClick(i, btn));
+
+    satOptionsContainer.appendChild(btn);
+  });
+}
+
 function getFilteredCards() {
   if (currentFilter === "all") return CARDS;
   return CARDS.filter(c => c.type === currentFilter);
@@ -216,62 +346,10 @@ function letterForIndex(idx) {
   return ["a", "b", "c", "d"][idx] || "?";
 }
 
-function setDeck(deckName) {
-  currentDeck = deckName;
 
-  Object.entries(deckButtons).forEach(([k, btn]) => {
-    if (k === deckName) btn.classList.add("active");
-    else btn.classList.remove("active");
-  });
-
-  loadNewCard();
-}
-function pickRandomSatCard() {
-  if (!SAT_CARDS || SAT_CARDS.length === 0) return null;
-  const idx = Math.floor(Math.random() * SAT_CARDS.length);
-  return SAT_CARDS[idx];
-}
-
-function renderSatCard() {
-  cardEl.classList.remove("correct", "wrong");
-  optionsContainer.innerHTML = "";
-  answeringLocked = false;
-
-  if (!currentCard) {
-    questionEl.textContent = "no sat cards yet.";
-    tagEl.textContent = "";
-    return;
-  }
-
-  questionEl.textContent = currentCard.question;
-  tagEl.textContent = currentCard.skill || "sat";
-
-  currentOptions = currentCard.choices.map((text, i) => ({
-    text,
-    correct: "ABCD"[i] === currentCard.correct
-  }));
-  correctOptionIndex = currentOptions.findIndex(o => o.correct);
-
-  currentOptions.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.className = "option-btn";
-    btn.dataset.index = i.toString();
-
-    const labelSpan = document.createElement("span");
-    labelSpan.className = "option-label";
-    labelSpan.textContent = letterForIndex(i);
-
-    const textSpan = document.createElement("span");
-    textSpan.className = "option-text";
-    textSpan.textContent = opt.text;
-
-    btn.appendChild(labelSpan);
-    btn.appendChild(textSpan);
-
-    btn.addEventListener("click", () => handleOptionClick(i, btn));
-
-    optionsContainer.appendChild(btn);
-  });
+function loadNewCard() {
+  currentCard = pickRandomCoreCard();
+  renderCoreCard();
 }
 
 function renderCoreCard() {
@@ -314,6 +392,46 @@ function renderCoreCard() {
 }
 
 // ---- confetti ----
+
+function handleSatOptionClick(index, btn) {
+  if (satAnsweringLocked) return;
+  satAnsweringLocked = true;
+
+  const allBtns = satOptionsContainer.querySelectorAll(".option-btn");
+  allBtns.forEach(b => b.classList.add("disabled"));
+
+  const clickedCorrect = index === currentSatCorrectIndex;
+
+  if (clickedCorrect) {
+    btn.classList.add("correct");
+    cardEl?.classList?.add("correct");
+
+    const rect = btn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const satDaily = loadSatDaily();
+    satDaily.correct += 1;
+    saveSatDaily(satDaily);
+    refreshSatStatsUI();
+    spawnConfettiBurst(cx, cy);
+
+    // auto-advance to next sat verbal card
+    setTimeout(() => {
+      cardEl?.classList?.remove("correct", "wrong");
+      loadSatQuestion();
+    }, 450);
+  } else {
+    btn.classList.add("wrong");
+    cardEl?.classList?.add("wrong");
+    if (currentSatCorrectIndex >= 0 && currentSatCorrectIndex < allBtns.length) {
+      allBtns[currentSatCorrectIndex].classList.add("correct");
+    }
+    // wrong: pause so you can see correct answer; use "next sat question" if you want to move on
+  }
+}
+
+
 
 function spawnConfettiBurst(x, y) {
   const colors = ["#22c55e", "#0ea5e9", "#facc15", "#f97316", "#a855f7"];
@@ -399,24 +517,23 @@ function handleOptionClick(index, btn) {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     incrementDailyCorrectAndMaybeUnlock(cx, cy);
+
+    // auto-advance to next core card after short pause
+    setTimeout(() => {
+      cardEl.classList.remove("correct", "wrong");
+      loadNewCard();
+    }, 450); // tweak delay if you want
   } else {
     btn.classList.add("wrong");
     cardEl.classList.add("wrong");
+
     if (correctOptionIndex >= 0 && correctOptionIndex < allBtns.length) {
       allBtns[correctOptionIndex].classList.add("correct");
     }
+    // on wrong, stay on card so you can see feedback; click next manually
   }
 }
 
-function loadNewCard() {
-  if (currentDeck === "sat") {
-    currentCard = pickRandomSatCard();
-    renderSatCard();
-  } else {
-    currentCard = pickRandomCoreCard();
-    renderCoreCard();
-  }
-}
 
 
 // ---- mode switching ----
@@ -643,8 +760,12 @@ function init() {
   dailyGoalEl.textContent = DAILY_GOAL.toString();
   refreshStatsUI();
 
-  deckButtons.core.addEventListener("click", () => setDeck("core"));
-  deckButtons.sat.addEventListener("click", () => setDeck("sat"));
+  // view routing
+  if (brandHomeEl) brandHomeEl.addEventListener("click", () => setView("home"));
+  if (goCoreBtn) goCoreBtn.addEventListener("click", () => setView("core"));
+  if (goSatBtn) goSatBtn.addEventListener("click", () => setView("sat"));
+
+  // existing deck/mode listeners (optional, only for core)
 
   modeButtons.all.addEventListener("click", () => setFilter("all"));
   modeButtons.sat.addEventListener("click", () => setFilter("sat"));
@@ -654,10 +775,16 @@ function init() {
     loadNewCard();
   });
 
+  if (satNextBtn) satNextBtn.addEventListener("click", () => {
+    loadSatQuestion();
+  });
+
   gyroLockBtn.addEventListener("click", handleGyroLock);
 
-  requestAnimationFrame(updateGyro);
-  loadNewCard();
+  requestAnimationFrame(gyrussLoop);
+
+  // start on home
+  setView("home");
 }
 
 init();
