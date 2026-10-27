@@ -86,13 +86,6 @@ body {
   color: #020617;
 }
 
-#view-home {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-}
-
 .home-card {
   max-width: 360px;
   width: 100%;
@@ -106,6 +99,16 @@ body {
 .home-card h2 {
   font-size: 1.1rem;
   margin-bottom: 12px;
+}
+
+#view-home {
+  min-height: 60vh;
+}
+
+#view-home > .home-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .primary-btn {
