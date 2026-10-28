@@ -61,6 +61,36 @@ body {
   color: #f9fafb;
 }
 
+#card-type-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.type-btn {
+  border: 1px solid rgba(55, 65, 81, 0.85);
+  background: rgba(15, 23, 42, 0.95);
+  color: #9ca3af;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+
+.type-btn.active {
+  background: linear-gradient(135deg, #22c55e, #0ea5e9);
+  color: #020617;
+  border-color: transparent;
+}
+
+.type-btn:hover {
+  border-color: rgba(59, 130, 246, 0.9);
+  color: #e5e7eb;
+}
+
+
 .mode-pill {
   display: flex;
   background: rgba(15, 23, 42, 0.9);
@@ -491,7 +521,7 @@ body {
 /* utility */
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* animations */
