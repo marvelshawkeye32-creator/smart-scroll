@@ -254,7 +254,7 @@ function setView(viewName) {
 // sat verbal
 
 function pickRandomSatVerbalCard() {
-  if (!window.SAT_VERBAL_CARDS || SAT_VERBAL_CARDS.length === 0) return null;
+  if (!SAT_VERBAL_CARDS || SAT_VERBAL_CARDS.length === 0) return null;
   const idx = Math.floor(Math.random() * SAT_VERBAL_CARDS.length);
   return SAT_VERBAL_CARDS[idx];
 }
@@ -310,10 +310,11 @@ function renderSatQuestion() {
 // core deck
 
 function getFilteredCards() {
-  if (!window.CARDS) return [];
+  if (!CARDS || !CARDS.length) return [];
   if (currentFilter === "all") return CARDS;
   return CARDS.filter((c) => c.type === currentFilter);
 }
+
 
 function pickRandomCoreCard() {
   const pool = getFilteredCards();
@@ -551,6 +552,8 @@ function setFilter(filter) {
 
 // ---- gyruss mini-game logic ----
 
+// ---- gyruss mini-game logic ----
+
 function resetGyruss() {
   gyrussBullets.forEach((b) => b.el.remove());
   gyrussEnemies.forEach((e) => e.el.remove());
@@ -618,6 +621,21 @@ function handleGyroLock() {
   gyrussFireBullet();
 }
 
+function handleCoreHit() {
+  // simple: reset the mini-game
+  resetGyruss();
+
+  // OPTIONAL: visual sting so you feel the fail
+  gyroCircle = document.getElementById("gyro-circle");
+  if (gyroCircle) {
+    gyroCircle.style.boxShadow = "0 0 20px rgba(239,68,68,0.9)";
+    setTimeout(() => {
+      gyroCircle.style.boxShadow = "inset 0 0 16px rgba(0, 0, 0, 0.9)";
+    }, 150);
+  }
+}
+
+
 function updateGyrussPositions(dt) {
   if (!gyrussRunning) return;
 
@@ -626,13 +644,25 @@ function updateGyrussPositions(dt) {
   const cy = arenaRect.height / 2;
 
   // enemies outward
+  const outerRadius = 80; // where enemies "hit" the circle
+
+  // enemies outward
   gyrussEnemies.forEach((e) => {
     e.radius += e.speed * dt;
+
+    // if they cross the outer ring, treat as hit
+    if (e.radius >= outerRadius) {
+      handleCoreHit();
+      e._remove = true;
+      return;
+    }
+
     const ex = cx + e.radius * Math.cos(e.angle);
     const ey = cy + e.radius * Math.sin(e.angle);
     e.el.style.left = `${ex - 5}px`;
     e.el.style.top = `${ey - 5}px`;
   });
+
 
   // bullets inward
   gyrussBullets.forEach((b) => {
@@ -642,7 +672,7 @@ function updateGyrussPositions(dt) {
     b.el.style.top = `${b.y - 5}px`;
   });
 
-  // bullet-enemy collisions
+  // bullet–enemy collisions
   const newEnemies = [];
   gyrussEnemies.forEach((e) => {
     let hit = false;
@@ -664,7 +694,7 @@ function updateGyrussPositions(dt) {
       }
     }
 
-    if (!hit) {
+    if (!hit && !e._remove) {
       newEnemies.push(e);
     } else {
       e.el.remove();
@@ -674,23 +704,28 @@ function updateGyrussPositions(dt) {
   gyrussEnemies = newEnemies;
   gyrussBullets = gyrussBullets.filter((b) => !b._remove);
 
-  // cull bullets
+  // remove bullets that reach inner radius or go too far
+  const innerRadius = 30;
+
   gyrussBullets = gyrussBullets.filter((b) => {
     const dx = b.x - cx;
     const dy = b.y - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 4) {
+
+    if (dist < innerRadius) {
       b.el.remove();
       return false;
     }
-    if (dist > 80) {
+
+    if (dist > 90) {
       b.el.remove();
       return false;
     }
+
     return true;
   });
 
-  // ship position
+  // ship position (orbit)
   const shipRadius = 80;
   const shipRad = (gyrussShipAngle - 90) * (Math.PI / 180);
   const sx = cx + shipRadius * Math.cos(shipRad);
@@ -698,7 +733,7 @@ function updateGyrussPositions(dt) {
   gyroShip.style.left = `${sx - 6}px`;
   gyroShip.style.top = `${sy - 8}px`;
 
-  // enemy-ship feedback
+  // enemy–ship feedback
   gyrussEnemies.forEach((e) => {
     const ex = parseFloat(e.el.style.left) + 5;
     const ey = parseFloat(e.el.style.top) + 5;
