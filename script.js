@@ -1,10 +1,10 @@
 // script.js
 
 // ---- config ----
-const DAILY_GOAL = 100;
+const DAILY_GOAL = 1;
 const PST_TIMEZONE = "America/Los_Angeles";
 const LS_KEY_SAT_DAILY = "smartScroll_satVerbalDaily_v1";
-const SAT_DAILY_GOAL = 10;
+const SAT_DAILY_GOAL = 1;
 
 
 // storage keys
